@@ -133,6 +133,8 @@ import org.agmas.noellesroles.packet.CriminalReasonerReasonC2SPacket;
 import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
 import org.agmas.noellesroles.ferryman.FerrymanHelper;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
+import org.agmas.noellesroles.gangsterstar.GangsterStarPlayerComponent;
+import org.agmas.noellesroles.gangsterstar.GangsterStarShopHandler;
 import org.agmas.noellesroles.hallucination.HallucinationEffectId;
 import org.agmas.noellesroles.hallucination.HallucinationHelper;
 import org.agmas.noellesroles.hallucination.KillRewardContext;
@@ -219,6 +221,7 @@ public class Noellesroles implements ModInitializer {
     public static Identifier HUNTER_ID = Identifier.of(MOD_ID, "hunter");
     public static Identifier ORTHOPEDIST_ID = Identifier.of(MOD_ID, "orthopedist");
     public static Identifier FERRYMAN_ID = Identifier.of(MOD_ID, "ferryman");
+    public static Identifier GANGSTER_STAR_ID = Identifier.of(MOD_ID, "gangster_star");
     public static Identifier COMMANDER_ID = Identifier.of(MOD_ID, "commander");
     public static Identifier SAINT_ID = Identifier.of(MOD_ID, "saint");
     public static final Identifier MURDER_MAYHEM_ID = Identifier.of(MOD_ID, "murder_mayhem");
@@ -238,6 +241,7 @@ public class Noellesroles implements ModInitializer {
     // 投掷斧死亡原因
     public static Identifier DEATH_REASON_THROWING_AXE = Identifier.of(MOD_ID, "throwing_axe");
     public static Identifier DEATH_REASON_COMMANDER_SUICIDE = Identifier.of(MOD_ID, "commander_suicide");
+    public static Identifier DEATH_REASON_GANGSTER_SPIRIT_TIMEOUT = Identifier.of(MOD_ID, "gangster_spirit_timeout");
     // 巫毒诅咒死亡原因
     public static Identifier DEATH_REASON_VOODOO = Identifier.of(MOD_ID, "voodoo");
 
@@ -302,6 +306,7 @@ public class Noellesroles implements ModInitializer {
     public static Role VULTURE = WatheRoles.registerRole(new Role(VULTURE_ID, new Color(181, 103, 0).getRGB(), false, false, Role.MoodType.FAKE, -1, false, VultureHelper::canSpawn));
     // 黑警角色 - 中立阵营，杀光所有人获胜，阻止其他阵营获胜
     public static Role CORRUPT_COP = WatheRoles.registerRole(new Role(CORRUPT_COP_ID, new Color(25, 50, 100).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true));
+    public static Role GANGSTER_STAR = WatheRoles.registerRole(new Role(GANGSTER_STAR_ID, new Color(74, 20, 140).getRGB(), false, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), true, ctx -> !ctx.isRoleAssigned(CORRUPT_COP)));
     // 病原体角色 - 中立阵营，感染所有存活玩家获胜
     public static Role PATHOGEN = WatheRoles.registerRole(new Role(PATHOGEN_ID, 0x7FFF00, false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
     // 饕餮角色 - 中立阵营，吞噬玩家获胜
@@ -323,7 +328,7 @@ public class Noellesroles implements ModInitializer {
     public static final ArrayList<Role> VANNILA_ROLES = new ArrayList<>();
     public static final ArrayList<Identifier> VANNILA_ROLE_IDS = new ArrayList<>();
     // 中立万能钥匙可用角色集合
-    private static final Set<Role> NEUTRAL_MASTER_KEY_ROLES = Set.of(VULTURE, PATHOGEN, TAOTIE, FERRYMAN);
+    private static final Set<Role> NEUTRAL_MASTER_KEY_ROLES = Set.of(VULTURE, PATHOGEN, TAOTIE, FERRYMAN, GANGSTER_STAR);
     private static final int TRAP_DISMANTLE_SHARED_COOLDOWN_TICKS = 15 * 20;
     private static final int MOMENT_TRIGGER_MIN_THRESHOLD = 2;
     // Static helpers have been moved to:
@@ -502,6 +507,7 @@ public class Noellesroles implements ModInitializer {
         SilencerShopHandler.register();
         LooseEndShopHandler.register();
         HallucinationShopHandler.register();
+        GangsterStarShopHandler.register();
 
         // 毒师手持毒针时允许攻击玩家
         AllowPlayerPunching.EVENT.register((attacker, victim) ->
@@ -664,6 +670,18 @@ public class Noellesroles implements ModInitializer {
             }
             if (gameWorldComponent.isRole(victim, WatheRoles.LOOSE_END)) {
                 removeLooseEndDrops(victim);
+            }
+            if (gameWorldComponent.isRole(victim, GANGSTER_STAR)
+                    && GangsterStarPlayerComponent.KEY.get(victim).isResolvingFinalStandDeath()) {
+                return null;
+            }
+            if (gameWorldComponent.isRole(victim, GANGSTER_STAR)
+                    && (deathReason == GameConstants.DeathReasons.GUN
+                    || deathReason == GameConstants.DeathReasons.SHOT_INNOCENT)) {
+                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(victim);
+                if (gangsterStarComponent.tryStartFinalStand(killer, deathReason)) {
+                    return KillPlayer.KillResult.cancel();
+                }
             }
 
             // 黑警被杀时结束黑警时刻
@@ -990,6 +1008,11 @@ public class Noellesroles implements ModInitializer {
                 // 初始化黑警时刻组件
                 CorruptCopPlayerComponent corruptCopComp = CorruptCopPlayerComponent.KEY.get(player);
                 corruptCopComp.initializeForGame(gameWorldComponent.getAllPlayers().size());
+            } else if (role.equals(GANGSTER_STAR)) {
+                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(player);
+                gangsterStarComponent.reset();
+                player.giveItemStack(WatheItems.REVOLVER.getDefaultStack());
+                player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
             } else if (role.equals(PATHOGEN)) {
                 PathogenPlayerComponent pathogenComp = PathogenPlayerComponent.KEY.get(player);
                 pathogenComp.reset();
@@ -1139,6 +1162,7 @@ public class Noellesroles implements ModInitializer {
             BomberPlayerComponent.KEY.get(player).reset();
             AssassinPlayerComponent.KEY.get(player).reset();
             CriminalReasonerPlayerComponent.KEY.get(player).reset();
+            GangsterStarPlayerComponent.KEY.get(player).reset();
             CorruptCopPlayerComponent.KEY.get(player).reset();
             ReporterPlayerComponent.KEY.get(player).reset();
             SerialKillerPlayerComponent.KEY.get(player).reset();
@@ -1168,7 +1192,7 @@ public class Noellesroles implements ModInitializer {
         TaskComplete.EVENT.register((player, taskType) -> {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
             Role role = gameWorldComponent.getRole(player);
-            if (role != null && (role.equals(BARTENDER) || role.equals(RECALLER) || role.equals(TIMEKEEPER) || role.equals(REPORTER))) {
+            if (role != null && (role.equals(BARTENDER) || role.equals(RECALLER) || role.equals(TIMEKEEPER) || role.equals(REPORTER) || role.equals(GANGSTER_STAR))) {
                 PlayerShopComponent playerShopComponent = PlayerShopComponent.KEY.get(player);
                 playerShopComponent.addToBalance(50);
             }
@@ -1303,6 +1327,38 @@ public class Noellesroles implements ModInitializer {
             }
 
             // 黑警胜利/阻止检查（最低优先级）
+            ServerPlayerEntity livingGangsterStar = null;
+            for (UUID uuid : gameComponent.getAllWithRole(GANGSTER_STAR)) {
+                ServerPlayerEntity player = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
+                if (GameFunctions.isPlayerPlayingAndAlive(player)) {
+                    livingGangsterStar = player;
+                    break;
+                }
+            }
+
+            if (livingGangsterStar != null) {
+                int aliveCount = 0;
+                boolean gangsterStarIsAlive = false;
+                for (ServerPlayerEntity player : world.getPlayers()) {
+                    if (!GameFunctions.isPlayerPlayingAndAlive(player)) continue;
+                    SwallowedPlayerComponent swallowedComp = SwallowedPlayerComponent.KEY.get(player);
+                    if (swallowedComp.isSwallowed()) continue;
+                    aliveCount++;
+                    if (player.getUuid().equals(livingGangsterStar.getUuid())) {
+                        gangsterStarIsAlive = true;
+                    }
+                }
+
+                if (aliveCount == 1 && gangsterStarIsAlive) {
+                    return CheckWinCondition.WinResult.neutralWin(livingGangsterStar);
+                }
+
+                if (currentStatus == GameFunctions.WinStatus.KILLERS
+                        || currentStatus == GameFunctions.WinStatus.PASSENGERS) {
+                    return CheckWinCondition.WinResult.block();
+                }
+            }
+
             ServerPlayerEntity livingCorruptCop = null;
             for (UUID uuid : gameComponent.getAllWithRole(CORRUPT_COP)) {
                 ServerPlayerEntity player = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
@@ -1537,6 +1593,14 @@ public class Noellesroles implements ModInitializer {
                 }
             }
 
+            // 黑帮巨星在黑帮精神期间被中途击杀时，重置状态并停止 Wathe 原生疯魔BGM。
+            if (gameComponent.isRole(victim, GANGSTER_STAR)) {
+                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(victim);
+                if (gangsterStarComponent.isFinalStandActive()) {
+                    gangsterStarComponent.reset();
+                }
+            }
+
             // 黑警击杀处理和黑警时刻检查
             if (killer != null && gameComponent.isRole(killer, CORRUPT_COP)) {
                 CorruptCopPlayerComponent corruptCopComp = CorruptCopPlayerComponent.KEY.get(killer);
@@ -1591,6 +1655,9 @@ public class Noellesroles implements ModInitializer {
         ShouldPunishGunShooter.EVENT.register((shooter, victim) -> {
             GameWorldComponent gameComponent = GameWorldComponent.KEY.get(shooter.getWorld());
             if (gameComponent.isRole(shooter, CORRUPT_COP)) {
+                return ShouldPunishGunShooter.PunishResult.cancel();
+            }
+            if (gameComponent.isRole(shooter, GANGSTER_STAR)) {
                 return ShouldPunishGunShooter.PunishResult.cancel();
             }
             if (gameComponent.isRole(shooter, HUNTER)) {
@@ -1911,7 +1978,19 @@ public class Noellesroles implements ModInitializer {
             ServerPlayerEntity requester = context.player();
             context.server().execute(() -> {
                 HallucinationPlayerComponent component = HallucinationPlayerComponent.KEY.get(requester);
+                GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(requester.getWorld());
+                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(requester);
+                boolean gangsterStarGunShot = gameWorldComponent.isRole(requester, GANGSTER_STAR)
+                        && GameConstants.DeathReasons.GUN.equals(payload.deathReason());
+                if (gangsterStarGunShot && !gangsterStarComponent.hasRevolverShot()) {
+                    requester.sendMessage(Text.translatable("tip.noellesroles.gangster_star.no_shots"), true);
+                    return;
+                }
                 if (component.handleDummyHit(payload)) {
+                    if (gangsterStarGunShot) {
+                        // 幻觉假人命中不走 Wathe 的 GunShootPayload，服务端确认命中后在这里扣除左轮次数。
+                        gangsterStarComponent.consumeRevolverShot();
+                    }
                     ServerPlayNetworking.send(
                             requester,
                             new HallucinationDummyStateS2CPacket(
@@ -3030,6 +3109,18 @@ public class Noellesroles implements ModInitializer {
         });
 
         // iron_man_activated 铁人药剂生效格式化器
+        ReplayRegistry.registerFormatter("gangster_spirit_triggered", (event, match, world) -> {
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
+            if (actorUuid == null || targetUuid == null) return null;
+
+            Text victimText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            Text shooterText = ReplayGenerator.formatPlayerName(targetUuid, playerInfoCache);
+            return Text.translatable("replay.gangster_spirit_triggered", victimText, shooterText);
+        });
+
         ReplayRegistry.registerFormatter("iron_man_activated", (event, match, world) -> {
             var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
             NbtCompound data = event.data();

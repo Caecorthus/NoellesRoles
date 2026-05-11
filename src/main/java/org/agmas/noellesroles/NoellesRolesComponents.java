@@ -38,6 +38,7 @@ import org.agmas.noellesroles.murdermayhem.MurderMayhemWorldComponent;
 import org.agmas.noellesroles.music.WorldMusicComponent;
 import org.agmas.noellesroles.scavenger.HiddenBodiesWorldComponent;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
+import org.agmas.noellesroles.gangsterstar.GangsterStarPlayerComponent;
 import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.entity.EntityComponentFactoryRegistry;
@@ -79,6 +80,7 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, HunterPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(HunterPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, OrthopedistPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(OrthopedistPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, FerrymanPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(FerrymanPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, GangsterStarPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(GangsterStarPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, CommanderPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CommanderPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, SaintPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(SaintPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, LooseEndPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(LooseEndPlayerComponent::new);

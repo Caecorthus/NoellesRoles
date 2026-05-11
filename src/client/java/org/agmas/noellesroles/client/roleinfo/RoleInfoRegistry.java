@@ -211,6 +211,7 @@ public class RoleInfoRegistry {
             case "jester" -> "roleinfo.win_condition.jester";
             case "pathogen" -> "roleinfo.win_condition.pathogen";
             case "corrupt_cop" -> "roleinfo.win_condition.corrupt_cop";
+            case "gangster_star" -> "roleinfo.win_condition.gangster_star";
             case "taotie" -> "roleinfo.win_condition.taotie";
             case "criminal_reasoner" -> "roleinfo.win_condition.criminal_reasoner";
             case "ferryman" -> "roleinfo.win_condition.ferryman";
@@ -224,7 +225,7 @@ public class RoleInfoRegistry {
                 "morphling", "phantom", "swapper", "the_insane_damned_paranoid_killer", "bomber", "assassin",
                 "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander"
         );
-        Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "pathogen", "taotie", "criminal_reasoner", "ferryman");
+        Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "gangster_star", "pathogen", "taotie", "criminal_reasoner", "ferryman");
         if (killer.contains(roleId)) return "killer";
         if (neutral.contains(roleId)) return "neutral";
         return "innocent";
@@ -486,6 +487,15 @@ public class RoleInfoRegistry {
                 .addSkill("moment")); // 触发黑警时刻
 
         // 病原体
+        m.put("noellesroles:gangster_star", r("gangster_star")
+                .addSharedNamedPassiveSkill("neutral", "shared.name.neutral")
+                .addSkillWithSharedNameAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.trigger.hold_use")
+                .addSkillWithSharedNameAndTrigger("revolver", null, "shared.name.revolver", "shared.trigger.initial_item")
+                .addSkillWithSharedNameAndTrigger("neutral_master_key", null, "shared.name.neutral_master_key", "shared.trigger.initial_item")
+                // 任务金币已写入中立效果说明，避免生成缺少名称的被动技能词条。
+                .addShopSkill("bullet")
+                .addShopSkill("gangster_spirit"));
+
         m.put("noellesroles:pathogen", r("pathogen")
                 .addSharedNamedPassiveSkill("no_sanity", "shared.name.neutral") // 中立基础能力与感染者高亮
                 .addSkillWithSharedNameEffectAndTrigger("neutral_master_key", null, "shared.name.neutral_master_key", "shared.effect.neutral_master_key", "shared.trigger.initial_item") // 中立万能钥匙

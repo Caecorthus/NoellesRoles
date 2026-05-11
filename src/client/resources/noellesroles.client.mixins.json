@@ -13,6 +13,7 @@
     "compat.presencefootsteps.PresenceFootstepsStealthMixin",
     "deatharena.LobbyPlayersRendererDeathArenaMixin",
     "ferryman.FerrymanHudMixin",
+    "gangsterstar.GangsterStarHudMixin",
     "jester.JesterHudMixin",
     "looseend.LooseEndOpeningPhaseClientWorldSoundMixin",
     "looseend.LooseEndOpeningPhaseHudMixin",
