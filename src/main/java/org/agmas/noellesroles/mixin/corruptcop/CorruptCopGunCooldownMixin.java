@@ -37,21 +37,21 @@ public abstract class CorruptCopGunCooldownMixin {
         }
 
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
+        ItemStack stack = player.getMainHandStack();
+        boolean isGangsterStarRevolverShot = gameWorldComponent.isRole(player, Noellesroles.GANGSTER_STAR)
+                && stack.isOf(WatheItems.REVOLVER);
         // 客户端也会提前拦截用于即时反馈，但最终仍以服务端判定为准。
-        if (gameWorldComponent.isRole(player, Noellesroles.GANGSTER_STAR)
+        if (isGangsterStarRevolverShot
                 && !GangsterStarPlayerComponent.KEY.get(player).hasRevolverShot()) {
             player.sendMessage(net.minecraft.text.Text.translatable("tip.noellesroles.gangster_star.no_shots"), true);
             ci.cancel();
             return;
         }
 
-        if (gameWorldComponent.isRole(player, Noellesroles.GANGSTER_STAR)) {
-            ItemStack stack = player.getMainHandStack();
-            if (stack.isOf(WatheItems.REVOLVER)
-                    && !player.getItemCooldownManager().isCoolingDown(WatheItems.REVOLVER)) {
-                // 服务端确认本次左轮请求可执行后立即扣弹，未命中也会消耗一次可用次数。
-                GangsterStarPlayerComponent.KEY.get(player).consumeRevolverShot();
-            }
+        if (isGangsterStarRevolverShot
+                && !player.getItemCooldownManager().isCoolingDown(WatheItems.REVOLVER)) {
+            // 服务端确认本次左轮请求可执行后立即扣弹，未命中也会消耗一次可用次数。
+            GangsterStarPlayerComponent.KEY.get(player).consumeRevolverShot();
         }
     }
 

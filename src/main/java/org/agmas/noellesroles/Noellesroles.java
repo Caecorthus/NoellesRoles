@@ -675,14 +675,6 @@ public class Noellesroles implements ModInitializer {
                     && GangsterStarPlayerComponent.KEY.get(victim).isResolvingFinalStandDeath()) {
                 return null;
             }
-            if (gameWorldComponent.isRole(victim, GANGSTER_STAR)
-                    && (deathReason == GameConstants.DeathReasons.GUN
-                    || deathReason == GameConstants.DeathReasons.SHOT_INNOCENT)) {
-                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(victim);
-                if (gangsterStarComponent.tryStartFinalStand(killer, deathReason)) {
-                    return KillPlayer.KillResult.cancel();
-                }
-            }
 
             // 黑警被杀时结束黑警时刻
             if (gameWorldComponent.isRole(victim, CORRUPT_COP)) {
@@ -878,6 +870,16 @@ public class Noellesroles implements ModInitializer {
                                 return KillPlayer.KillResult.cancel();
                             }
                         }
+                    }
+                }
+            }
+
+            if (gameWorldComponent.isRole(victim, GANGSTER_STAR)) {
+                GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(victim);
+                if (deathReason == GameConstants.DeathReasons.GUN
+                        || deathReason == GameConstants.DeathReasons.SHOT_INNOCENT) {
+                    if (gangsterStarComponent.tryStartFinalStand(killer, deathReason)) {
+                        return KillPlayer.KillResult.cancel();
                     }
                 }
             }
@@ -1982,6 +1984,7 @@ public class Noellesroles implements ModInitializer {
                 GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(requester.getWorld());
                 GangsterStarPlayerComponent gangsterStarComponent = GangsterStarPlayerComponent.KEY.get(requester);
                 boolean gangsterStarGunShot = gameWorldComponent.isRole(requester, GANGSTER_STAR)
+                        && requester.getMainHandStack().isOf(WatheItems.REVOLVER)
                         && GameConstants.DeathReasons.GUN.equals(payload.deathReason());
                 if (gangsterStarGunShot && !gangsterStarComponent.hasRevolverShot()) {
                     requester.sendMessage(Text.translatable("tip.noellesroles.gangster_star.no_shots"), true);
@@ -2061,7 +2064,7 @@ public class Noellesroles implements ModInitializer {
             Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache =
                     match != null ? ReplayGenerator.getPlayerInfoCache(match) : Map.of();
             DefaultReplayFormatters.setPlayerInfoCache(playerInfoCache);
-            List<Text> replayLines = buildSpectatorReplayLines(payload.targetUuid(), match, requester.getServerWorld());
+            List<String> replayLines = buildSpectatorReplayLines(payload.targetUuid(), match, requester.getServerWorld());
             ServerPlayNetworking.send(requester, new SpectatorReplayDetailSyncS2CPacket(payload.requestId(), payload.targetUuid(), replayLines));
         });
 
@@ -2849,14 +2852,14 @@ public class Noellesroles implements ModInitializer {
                                                                          ServerWorld world,
                                                                          Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache) {
         if (match == null) {
-            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1L, -1, -1L, Text.empty());
+            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1L, -1, -1L, "");
         }
 
         long nowTick = world.getTime();
         String deathReasonRaw = "";
         long deathTick = -1L;
         long latestRelevantReplayTick = -1L;
-        Text replaySummary = Text.empty();
+        String replaySummary = "";
         ReplayGenerator.PlayerInfo playerInfo = playerInfoCache.get(targetUuid);
         String roleTranslationKey = playerInfo != null ? playerInfo.roleTranslationKey() : "";
         int roleColor = playerInfo != null ? (0xFF000000 | playerInfo.roleColor()) : 0xFFAAAAAA;
@@ -2878,7 +2881,7 @@ public class Noellesroles implements ModInitializer {
             Text formattedLine = formatSpectatorReplayLine(event, match, world);
             if (formattedLine != null) {
                 latestRelevantReplayTick = event.worldTick();
-                replaySummary = formattedLine;
+                replaySummary = formattedLine.getString();
             }
         }
 
@@ -2936,14 +2939,14 @@ public class Noellesroles implements ModInitializer {
         return null;
     }
 
-    private static List<Text> buildSpectatorReplayLines(UUID targetUuid,
-                                                        GameRecordManager.MatchRecord match,
-                                                        ServerWorld world) {
+    private static List<String> buildSpectatorReplayLines(UUID targetUuid,
+                                                          GameRecordManager.MatchRecord match,
+                                                          ServerWorld world) {
         if (match == null) {
             return List.of();
         }
 
-        List<Text> replayLines = new ArrayList<>();
+        List<String> replayLines = new ArrayList<>();
         List<GameRecordEvent> events = new ArrayList<>(match.getEvents());
         events.sort(Comparator.comparingLong(GameRecordEvent::worldTick));
 
@@ -2954,7 +2957,7 @@ public class Noellesroles implements ModInitializer {
 
             Text formattedLine = formatSpectatorReplayLine(event, match, world);
             if (formattedLine != null) {
-                replayLines.add(formattedLine);
+                replayLines.add(formattedLine.getString());
             }
         }
 

@@ -498,7 +498,7 @@ public class SpectatorAssistPanelScreen extends Screen {
                     entry.deathTick(),
                     entry.deathAgeSeconds(),
                     entry.latestRelevantReplayTick(),
-                    entry.replaySummary()
+                    Text.literal(entry.replaySummary())
             ));
         }
         pruneReplayDetailCache();
@@ -530,7 +530,7 @@ public class SpectatorAssistPanelScreen extends Screen {
 
         ServerSyncData syncData = serverSyncByUuid.get(targetUuid);
         long versionTick = syncData != null ? syncData.latestRelevantReplayTick() : -1L;
-        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(versionTick, List.copyOf(payload.replayLines()), false));
+        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(versionTick, toTextLines(payload.replayLines()), false));
     }
 
     private List<Text> buildReplayTooltip(EntryData entry) {
@@ -608,6 +608,17 @@ public class SpectatorAssistPanelScreen extends Screen {
         return syncData.replaySummary();
     }
 
+    private static List<Text> toTextLines(List<String> replayLines) {
+        if (replayLines == null || replayLines.isEmpty()) {
+            return List.of();
+        }
+        List<Text> lines = new ArrayList<>();
+        for (String replayLine : replayLines) {
+            lines.add(Text.literal(replayLine));
+        }
+        return lines;
+    }
+
     private static long resolveDeathTick(ServerSyncData syncData) {
         if (syncData == null) {
             return Long.MAX_VALUE;
@@ -642,5 +653,4 @@ public class SpectatorAssistPanelScreen extends Screen {
     private record ReplayDetailState(long versionTick, List<Text> replayLines, boolean pending) {
     }
 }
-
 

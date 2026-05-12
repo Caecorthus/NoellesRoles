@@ -4,8 +4,6 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.Noellesroles;
 
@@ -42,7 +40,7 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             buf.writeVarLong(entry.deathTick());
             buf.writeVarInt(entry.deathAgeSeconds());
             buf.writeVarLong(entry.latestRelevantReplayTick());
-            TextCodecs.PACKET_CODEC.encode(buf, entry.replaySummary());
+            buf.writeString(entry.replaySummary(), 512);
         }
         buf.writeVarInt(replayToasts.size());
         for (ReplayToast replayToast : replayToasts) {
@@ -67,7 +65,7 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             long deathTick = buf.readVarLong();
             int deathAgeSeconds = buf.readVarInt();
             long latestRelevantReplayTick = buf.readVarLong();
-            Text replaySummary = TextCodecs.PACKET_CODEC.decode(buf);
+            String replaySummary = buf.readString(512);
             entries.add(new Entry(uuid, roleTranslationKey, roleColor, deathReasonRaw, deathTick, deathAgeSeconds, latestRelevantReplayTick, replaySummary));
         }
         int toastCount = buf.readVarInt();
@@ -89,10 +87,9 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
                         long deathTick,
                         int deathAgeSeconds,
                         long latestRelevantReplayTick,
-                        Text replaySummary) {
+                        String replaySummary) {
     }
 
     public record ReplayToast(long worldTick, String actorRoleKey, String targetRoleKey, String deathReasonRaw) {
     }
 }
-

@@ -41,6 +41,7 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
     private int revolverShots = STARTING_REVOLVER_SHOTS;
     private boolean gangsterSpirit = false;
     private boolean finalStandActive = false;
+    private boolean finalStandStartedPsycho = false;
     private boolean resolvingFinalStandDeath = false;
     private int finalStandTicks = 0;
     private UUID pendingKiller = null;
@@ -51,12 +52,13 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
     }
 
     public void reset() {
-        if (this.finalStandActive) {
+        if (this.finalStandActive && this.finalStandStartedPsycho) {
             PlayerPsychoComponent.KEY.get(this.player).stopPsycho(true);
         }
         this.revolverShots = STARTING_REVOLVER_SHOTS;
         this.gangsterSpirit = false;
         this.finalStandActive = false;
+        this.finalStandStartedPsycho = false;
         this.finalStandTicks = 0;
         this.pendingKiller = null;
         this.pendingDeathReason = GameConstants.DeathReasons.GUN;
@@ -146,10 +148,12 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
         this.finalStandTicks = FINAL_STAND_TICKS;
         this.pendingKiller = killer == null ? null : killer.getUuid();
         this.pendingDeathReason = deathReason == null ? GameConstants.DeathReasons.GUN : deathReason;
+        this.finalStandStartedPsycho = false;
 
         PlayerPsychoComponent psychoComponent = PlayerPsychoComponent.KEY.get(this.player);
         // 这里必须使用 Wathe 原生的世界疯魔计数，否则客户端 isPsychoActive() 不会触发原版疯魔BGM。
         if (psychoComponent.startPsycho(true)) {
+            this.finalStandStartedPsycho = true;
             psychoComponent.setPsychoTicks(Integer.MAX_VALUE);
             // 黑帮精神只给予疯魔工具，不提供任何护盾。
             psychoComponent.setArmour(0);
@@ -182,7 +186,10 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
         if (this.finalStandTicks <= 0 && this.player instanceof ServerPlayerEntity serverPlayer) {
             this.finalStandActive = false;
             // 使用 Wathe 原生疯魔状态结束逻辑，让 GameWorldComponent.psychosActive 同步递减并停止原版疯魔BGM。
-            PlayerPsychoComponent.KEY.get(this.player).stopPsycho(true);
+            if (this.finalStandStartedPsycho) {
+                PlayerPsychoComponent.KEY.get(this.player).stopPsycho(true);
+                this.finalStandStartedPsycho = false;
+            }
             ServerPlayerEntity killer = null;
             if (this.pendingKiller != null && this.player.getWorld() instanceof ServerWorld serverWorld) {
                 killer = serverWorld.getServer().getPlayerManager().getPlayer(this.pendingKiller);
@@ -214,6 +221,7 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
         tag.putInt("revolverShots", this.revolverShots);
         tag.putBoolean("gangsterSpirit", this.gangsterSpirit);
         tag.putBoolean("finalStandActive", this.finalStandActive);
+        tag.putBoolean("finalStandStartedPsycho", this.finalStandStartedPsycho);
         tag.putInt("finalStandTicks", this.finalStandTicks);
         if (this.pendingKiller != null) {
             tag.putUuid("pendingKiller", this.pendingKiller);
@@ -228,6 +236,7 @@ public class GangsterStarPlayerComponent implements AutoSyncedComponent, ServerT
         this.revolverShots = tag.contains("revolverShots") ? tag.getInt("revolverShots") : STARTING_REVOLVER_SHOTS;
         this.gangsterSpirit = tag.getBoolean("gangsterSpirit");
         this.finalStandActive = tag.getBoolean("finalStandActive");
+        this.finalStandStartedPsycho = tag.getBoolean("finalStandStartedPsycho");
         this.finalStandTicks = tag.getInt("finalStandTicks");
         this.pendingKiller = tag.containsUuid("pendingKiller") ? tag.getUuid("pendingKiller") : null;
         this.pendingDeathReason = tag.contains("pendingDeathReason")
