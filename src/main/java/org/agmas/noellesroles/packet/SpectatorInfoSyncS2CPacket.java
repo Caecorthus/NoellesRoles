@@ -93,4 +93,3 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
     public record ReplayToast(long worldTick, String actorRoleKey, String targetRoleKey, String deathReasonRaw) {
     }
 }
-

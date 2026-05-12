@@ -45,4 +45,3 @@ public record SpectatorReplayDetailSyncS2CPacket(long requestId,
         return new SpectatorReplayDetailSyncS2CPacket(requestId, targetUuid, replayLines);
     }
 }
-

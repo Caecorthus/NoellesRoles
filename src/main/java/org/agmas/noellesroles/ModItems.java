@@ -24,6 +24,8 @@ import org.agmas.noellesroles.item.ThrowingAxeItem;
 import org.agmas.noellesroles.item.HunterTrapItem;
 import org.agmas.noellesroles.item.DoubleBarrelShotgunItem;
 import org.agmas.noellesroles.item.DoubleBarrelShellItem;
+import org.agmas.noellesroles.item.GangsterSpiritItem;
+import org.agmas.noellesroles.item.GangsterStarBulletItem;
 import org.agmas.noellesroles.item.MedicalSplintItem;
 import org.agmas.noellesroles.item.BaseSpiritItem;
 import org.agmas.noellesroles.item.IngredientItem;
@@ -147,6 +149,14 @@ public class ModItems {
     public static final Item DOUBLE_BARREL_SHELL = register(
             new DoubleBarrelShellItem(new Item.Settings().maxCount(16)),
             "double_barrel_shell"
+    );
+    public static final Item GANGSTER_STAR_BULLET = register(
+            new GangsterStarBulletItem(new Item.Settings().maxCount(16)),
+            "gangster_star_bullet"
+    );
+    public static final Item GANGSTER_SPIRIT = register(
+            new GangsterSpiritItem(new Item.Settings().maxCount(1)),
+            "gangster_spirit"
     );
 
     // ---- 工程师系统 ----

@@ -301,6 +301,18 @@ public class NoellesrolesClient implements ClientModInitializer {
                     && !FogOfWarClientHelper.isWithinKillerInstinctLimit(localPlayer, player)) {
                 return GetInstinctHighlight.HighlightResult.skip();
             }
+
+            // 黑帮巨星使用自己的杀手本能：按本能键时用深紫色统一高亮所有其他玩家。
+            if (gameWorldComponent.isRole(localPlayer, Noellesroles.GANGSTER_STAR) && player != localPlayer) {
+                if (gameWorldComponent.isRole(player, Noellesroles.SURVIVAL_MASTER) && !localPlayer.canSee(player)) {
+                    return GetInstinctHighlight.HighlightResult.skip();
+                }
+                return GetInstinctHighlight.HighlightResult.withKeybind(
+                        Noellesroles.GANGSTER_STAR.color(),
+                        GetInstinctHighlight.HighlightResult.PRIORITY_HIGH + 1
+                );
+            }
+
             HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(localPlayer);
             if (HallucinationHelper.hasInstinctMisjudge(localPlayer, player)) {
                 int color = HallucinationHelper.isInstinctMisjudgeTreatAsAlly(localPlayer, player)
@@ -569,6 +581,18 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
 
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
+
+            // 黑帮巨星的本能不区分目标身份，幻觉替身存在时也保持统一深紫色。
+            if (gameWorldComponent.isRole(localPlayer, Noellesroles.GANGSTER_STAR) && player != localPlayer) {
+                if (gameWorldComponent.isRole(player, Noellesroles.SURVIVAL_MASTER) && !localPlayer.canSee(player)) {
+                    return GetInstinctHighlight.HighlightResult.skip();
+                }
+                return GetInstinctHighlight.HighlightResult.withKeybind(
+                        Noellesroles.GANGSTER_STAR.color(),
+                        GetInstinctHighlight.HighlightResult.PRIORITY_HIGH + 1
+                );
+            }
+
             if (HallucinationHelper.hasInstinctMisjudge(localPlayer, player)) {
                 int color = HallucinationHelper.isInstinctMisjudgeTreatAsAlly(localPlayer, player)
                         ? MathHelper.hsvToRgb(0F, 1.0F, 0.6F)
@@ -687,6 +711,19 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
             boolean instinctEnabled = WatheClient.isInstinctEnabled();
+
+            // 黑帮巨星看幻觉假人时也使用与角色颜色一致的深紫色本能轮廓。
+            if (gameWorldComponent.isRole(localPlayer, Noellesroles.GANGSTER_STAR)) {
+                if (gameWorldComponent.isRole(referencePlayer, Noellesroles.SURVIVAL_MASTER)
+                        && !localPlayer.canSee(referencePlayer)) {
+                    return GetInstinctHighlight.HighlightResult.skip();
+                }
+                return GetInstinctHighlight.HighlightResult.withKeybind(
+                        Noellesroles.GANGSTER_STAR.color(),
+                        GetInstinctHighlight.HighlightResult.PRIORITY_HIGH + 1
+                );
+            }
+
             if (HallucinationHelper.hasInstinctMisjudge(localPlayer, referencePlayer)) {
                 int color = HallucinationHelper.isInstinctMisjudgeTreatAsAlly(localPlayer, referencePlayer)
                         ? MathHelper.hsvToRgb(0F, 1.0F, 0.6F)

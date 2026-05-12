@@ -16,6 +16,7 @@ import org.agmas.noellesroles.client.util.rolehud.CommanderHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CorruptCopHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CriminalReasonerHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.FerrymanHudRenderer;
+import org.agmas.noellesroles.client.util.rolehud.GangsterStarHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.MorphlingHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.NoisemakerHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.OrthopedistHudRenderer;
@@ -48,6 +49,7 @@ public final class HudRenderHelper {
         ROLE_HUD_REGISTRY.put(Noellesroles.CORRUPT_COP, new CorruptCopHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.CRIMINAL_REASONER, new CriminalReasonerHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.FERRYMAN, new FerrymanHudRenderer());
+        ROLE_HUD_REGISTRY.put(Noellesroles.GANGSTER_STAR, new GangsterStarHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.MORPHLING, new MorphlingHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.NOISEMAKER, new NoisemakerHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.ORTHOPEDIST, new OrthopedistHudRenderer());

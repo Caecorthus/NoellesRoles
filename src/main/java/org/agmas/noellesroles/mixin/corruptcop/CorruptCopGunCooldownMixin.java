@@ -6,9 +6,11 @@ import dev.doctor4t.wathe.util.GunShootPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
+import org.agmas.noellesroles.gangsterstar.GangsterStarPlayerComponent;
 import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,6 +33,25 @@ public abstract class CorruptCopGunCooldownMixin {
         Entity target = player.getServerWorld().getEntityById(payload.target());
         if (SwallowedInteractionHelper.blocksTargetForViewer(player, target)) {
             ci.cancel();
+            return;
+        }
+
+        GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
+        ItemStack stack = player.getMainHandStack();
+        boolean isGangsterStarRevolverShot = gameWorldComponent.isRole(player, Noellesroles.GANGSTER_STAR)
+                && stack.isOf(WatheItems.REVOLVER);
+        // 客户端也会提前拦截用于即时反馈，但最终仍以服务端判定为准。
+        if (isGangsterStarRevolverShot
+                && !GangsterStarPlayerComponent.KEY.get(player).hasRevolverShot()) {
+            player.sendMessage(net.minecraft.text.Text.translatable("tip.noellesroles.gangster_star.no_shots"), true);
+            ci.cancel();
+            return;
+        }
+
+        if (isGangsterStarRevolverShot
+                && !player.getItemCooldownManager().isCoolingDown(WatheItems.REVOLVER)) {
+            // 服务端确认本次左轮请求可执行后立即扣弹，未命中也会消耗一次可用次数。
+            GangsterStarPlayerComponent.KEY.get(player).consumeRevolverShot();
         }
     }
 
@@ -81,5 +102,6 @@ public abstract class CorruptCopGunCooldownMixin {
             looseEndComponent.consumeOneRevolver();
             looseEndComponent.queueRevolverCooldown(LOOSE_END_REVOLVER_COOLDOWN_TICKS);
         }
+
     }
 }

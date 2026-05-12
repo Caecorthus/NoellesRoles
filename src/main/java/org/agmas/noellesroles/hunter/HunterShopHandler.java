@@ -27,8 +27,8 @@ public class HunterShopHandler {
             context.getEntries().removeIf(entry -> !ALLOWED_VANILLA_IDS.contains(entry.id()));
 
             context.addEntry(0, new ShopEntry.Builder("hunter_trap", ModItems.HUNTER_TRAP.getDefaultStack(), 75, ShopEntry.Type.WEAPON).build());
-            context.addEntry(0, new ShopEntry.Builder("double_barrel_shell", ModItems.DOUBLE_BARREL_SHELL.getDefaultStack(), 100, ShopEntry.Type.WEAPON).build());
-            context.addEntry(0, new ShopEntry.Builder("double_barrel_shotgun", ModItems.DOUBLE_BARREL_SHOTGUN.getDefaultStack(), 200, ShopEntry.Type.WEAPON).stock(1).build());
+            context.addEntry(0, new ShopEntry.Builder("double_barrel_shell", ModItems.DOUBLE_BARREL_SHELL.getDefaultStack(), 125, ShopEntry.Type.WEAPON).build());
+            context.addEntry(0, new ShopEntry.Builder("double_barrel_shotgun", ModItems.DOUBLE_BARREL_SHOTGUN.getDefaultStack(), 100, ShopEntry.Type.WEAPON).stock(1).build());
         });
     }
 }
