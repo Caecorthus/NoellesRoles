@@ -109,7 +109,7 @@ public class SpectatorAssistPanelScreen extends Screen {
             int roleColor = resolveRoleColor(syncData);
             Text deathReasonText = resolveDeathReasonText(gwc, uuid, dead, syncData);
             long latestRelevantReplayTick = resolveLatestRelevantReplayTick(syncData);
-            String replaySummary = resolveReplaySummary(syncData);
+            Text replaySummary = resolveReplaySummary(syncData);
             Identifier skinTexture = playerEntry != null
                     ? playerEntry.getSkinTextures().texture()
                     : DefaultSkinHelper.getSkinTextures(new GameProfile(uuid, nameText.getString())).texture();
@@ -457,14 +457,14 @@ public class SpectatorAssistPanelScreen extends Screen {
         return null;
     }
 
-    private static List<Text> resolveReplayLines(List<String> replayLines) {
+    private static List<Text> resolveReplayLines(List<Text> replayLines) {
         if (replayLines == null || replayLines.isEmpty()) {
             return List.of();
         }
         List<Text> lines = new ArrayList<>();
-        for (String replayLine : replayLines) {
-            if (replayLine != null && !replayLine.isBlank()) {
-                lines.add(Text.literal(replayLine));
+        for (Text replayLine : replayLines) {
+            if (replayLine != null && !replayLine.getString().isBlank()) {
+                lines.add(replayLine);
             }
         }
         return lines;
@@ -538,7 +538,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_title"));
 
         ReplayDetailState detailState = replayDetailsByUuid.get(entry.uuid);
-        boolean hasSummary = entry.replaySummary != null && !entry.replaySummary.isBlank();
+        boolean hasSummary = entry.replaySummary != null && !entry.replaySummary.getString().isBlank();
         boolean hasReplayVersion = entry.latestRelevantReplayTick >= 0L;
 
         if (detailState != null && !detailState.pending() && detailState.versionTick() == entry.latestRelevantReplayTick) {
@@ -552,7 +552,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         }
 
         if (hasSummary && hasReplayVersion) {
-            tooltip.add(Text.literal(entry.replaySummary));
+            tooltip.add(entry.replaySummary);
             requestReplayDetails(entry.uuid, entry.latestRelevantReplayTick);
             tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_loading"));
         } else {
@@ -601,9 +601,9 @@ public class SpectatorAssistPanelScreen extends Screen {
         return syncData.latestRelevantReplayTick();
     }
 
-    private static String resolveReplaySummary(ServerSyncData syncData) {
+    private static Text resolveReplaySummary(ServerSyncData syncData) {
         if (syncData == null) {
-            return "";
+            return Text.empty();
         }
         return syncData.replaySummary();
     }
@@ -629,17 +629,17 @@ public class SpectatorAssistPanelScreen extends Screen {
     private record EntryData(UUID uuid, Text nameText, Text roleText, int roleColor, boolean online, boolean dead, boolean self,
                              Text deathReasonText,
                              long latestRelevantReplayTick,
-                             String replaySummary,
+                             Text replaySummary,
                              Identifier skinTexture) {
     }
 
     private record Layout(int startX, int listTop, int rowsPerPage, int columnWidth) {
     }
 
-    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, long deathTick, int deathAgeSeconds, long latestRelevantReplayTick, String replaySummary) {
+    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, long deathTick, int deathAgeSeconds, long latestRelevantReplayTick, Text replaySummary) {
     }
 
-    private record ReplayDetailState(long versionTick, List<String> replayLines, boolean pending) {
+    private record ReplayDetailState(long versionTick, List<Text> replayLines, boolean pending) {
     }
 }
 

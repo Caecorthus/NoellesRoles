@@ -4,6 +4,8 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.Noellesroles;
 
@@ -13,7 +15,7 @@ import java.util.UUID;
 
 public record SpectatorReplayDetailSyncS2CPacket(long requestId,
                                                  UUID targetUuid,
-                                                 List<String> replayLines) implements CustomPayload {
+                                                 List<Text> replayLines) implements CustomPayload {
     public static final Id<SpectatorReplayDetailSyncS2CPacket> ID =
             new Id<>(Identifier.of(Noellesroles.MOD_ID, "spectator_replay_detail_sync"));
 
@@ -29,8 +31,8 @@ public record SpectatorReplayDetailSyncS2CPacket(long requestId,
         buf.writeVarLong(requestId);
         buf.writeUuid(targetUuid);
         buf.writeVarInt(replayLines.size());
-        for (String line : replayLines) {
-            buf.writeString(line, 512);
+        for (Text line : replayLines) {
+            TextCodecs.PACKET_CODEC.encode(buf, line);
         }
     }
 
@@ -38,9 +40,9 @@ public record SpectatorReplayDetailSyncS2CPacket(long requestId,
         long requestId = buf.readVarLong();
         UUID targetUuid = buf.readUuid();
         int lineCount = buf.readVarInt();
-        List<String> replayLines = new ArrayList<>(lineCount);
+        List<Text> replayLines = new ArrayList<>(lineCount);
         for (int i = 0; i < lineCount; i++) {
-            replayLines.add(buf.readString(512));
+            replayLines.add(TextCodecs.PACKET_CODEC.decode(buf));
         }
         return new SpectatorReplayDetailSyncS2CPacket(requestId, targetUuid, replayLines);
     }

@@ -119,7 +119,8 @@ public abstract class ScoreboardRoleSelectorComponentMixin {
                 vanillaCivilianCandidates.add(player);
                 continue;
             }
-            if (role.getFaction().equals(WatheRoles.CIVILIAN.getFaction())) {
+            if (role.getFaction().equals(WatheRoles.CIVILIAN.getFaction())
+                    && !Noellesroles.isVigilanteSlotRole(role)) {
                 civilianCandidates.add(player);
             }
         }
