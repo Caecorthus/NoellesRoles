@@ -328,7 +328,7 @@ public class Noellesroles implements ModInitializer {
     public static final ArrayList<Role> VANNILA_ROLES = new ArrayList<>();
     public static final ArrayList<Identifier> VANNILA_ROLE_IDS = new ArrayList<>();
     // 中立万能钥匙可用角色集合
-    private static final Set<Role> NEUTRAL_MASTER_KEY_ROLES = Set.of(VULTURE, PATHOGEN, TAOTIE, FERRYMAN, GANGSTER_STAR);
+    private static final Set<Role> NEUTRAL_MASTER_KEY_ROLES = Set.of(VULTURE, PATHOGEN, TAOTIE, FERRYMAN);
     private static final int TRAP_DISMANTLE_SHARED_COOLDOWN_TICKS = 15 * 20;
     private static final int MOMENT_TRIGGER_MIN_THRESHOLD = 2;
     // Static helpers have been moved to:
@@ -1698,7 +1698,8 @@ public class Noellesroles implements ModInitializer {
                 if (NEUTRAL_MASTER_KEY_ROLES.contains(playerRole)) {
                     player.getItemCooldownManager().set(ModItems.NEUTRAL_MASTER_KEY, 200);
                     return DoorInteraction.DoorInteractionResult.ALLOW;
-                } else if (gameWorld.isRole(player, Noellesroles.CORRUPT_COP) && doorType == DoorInteraction.DoorType.SMALL_DOOR) {
+                } else if ((gameWorld.isRole(player, Noellesroles.CORRUPT_COP) || gameWorld.isRole(player, Noellesroles.GANGSTER_STAR))
+                        && doorType == DoorInteraction.DoorType.SMALL_DOOR) {
                     player.getItemCooldownManager().set(ModItems.NEUTRAL_MASTER_KEY, 200);
                     return DoorInteraction.DoorInteractionResult.ALLOW;
                 }
@@ -2060,7 +2061,7 @@ public class Noellesroles implements ModInitializer {
             Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache =
                     match != null ? ReplayGenerator.getPlayerInfoCache(match) : Map.of();
             DefaultReplayFormatters.setPlayerInfoCache(playerInfoCache);
-            List<String> replayLines = buildSpectatorReplayLines(payload.targetUuid(), match, requester.getServerWorld());
+            List<Text> replayLines = buildSpectatorReplayLines(payload.targetUuid(), match, requester.getServerWorld());
             ServerPlayNetworking.send(requester, new SpectatorReplayDetailSyncS2CPacket(payload.requestId(), payload.targetUuid(), replayLines));
         });
 
@@ -2848,14 +2849,14 @@ public class Noellesroles implements ModInitializer {
                                                                          ServerWorld world,
                                                                          Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache) {
         if (match == null) {
-            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1L, -1, -1L, "");
+            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1L, -1, -1L, Text.empty());
         }
 
         long nowTick = world.getTime();
         String deathReasonRaw = "";
         long deathTick = -1L;
         long latestRelevantReplayTick = -1L;
-        String replaySummary = "";
+        Text replaySummary = Text.empty();
         ReplayGenerator.PlayerInfo playerInfo = playerInfoCache.get(targetUuid);
         String roleTranslationKey = playerInfo != null ? playerInfo.roleTranslationKey() : "";
         int roleColor = playerInfo != null ? (0xFF000000 | playerInfo.roleColor()) : 0xFFAAAAAA;
@@ -2874,7 +2875,7 @@ public class Noellesroles implements ModInitializer {
                 continue;
             }
 
-            String formattedLine = formatSpectatorReplayLine(event, match, world);
+            Text formattedLine = formatSpectatorReplayLine(event, match, world);
             if (formattedLine != null) {
                 latestRelevantReplayTick = event.worldTick();
                 replaySummary = formattedLine;
@@ -2935,14 +2936,14 @@ public class Noellesroles implements ModInitializer {
         return null;
     }
 
-    private static List<String> buildSpectatorReplayLines(UUID targetUuid,
-                                                          GameRecordManager.MatchRecord match,
-                                                          ServerWorld world) {
+    private static List<Text> buildSpectatorReplayLines(UUID targetUuid,
+                                                        GameRecordManager.MatchRecord match,
+                                                        ServerWorld world) {
         if (match == null) {
             return List.of();
         }
 
-        List<String> replayLines = new ArrayList<>();
+        List<Text> replayLines = new ArrayList<>();
         List<GameRecordEvent> events = new ArrayList<>(match.getEvents());
         events.sort(Comparator.comparingLong(GameRecordEvent::worldTick));
 
@@ -2951,7 +2952,7 @@ public class Noellesroles implements ModInitializer {
                 continue;
             }
 
-            String formattedLine = formatSpectatorReplayLine(event, match, world);
+            Text formattedLine = formatSpectatorReplayLine(event, match, world);
             if (formattedLine != null) {
                 replayLines.add(formattedLine);
             }
@@ -2960,9 +2961,9 @@ public class Noellesroles implements ModInitializer {
         return replayLines;
     }
 
-    private static String formatSpectatorReplayLine(GameRecordEvent event,
-                                                    GameRecordManager.MatchRecord match,
-                                                    ServerWorld world) {
+    private static Text formatSpectatorReplayLine(GameRecordEvent event,
+                                                  GameRecordManager.MatchRecord match,
+                                                  ServerWorld world) {
         ReplayEventFormatter formatter = ReplayRegistry.getFormatter(event.type());
         if (formatter == null) {
             return null;
@@ -2974,7 +2975,7 @@ public class Noellesroles implements ModInitializer {
         }
 
         String time = ReplayGenerator.formatTime(event.worldTick(), match.getStartTick());
-        return "[" + time + "]" + formatted.getString();
+        return Text.literal("[" + time + "]").append(formatted);
     }
 
     private static boolean isReplayEventRelatedToPlayer(UUID targetUuid, GameRecordEvent event) {
