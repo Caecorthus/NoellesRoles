@@ -556,6 +556,11 @@ public class Noellesroles implements ModInitializer {
             });
         });
 
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            ServerPlayerEntity player = handler.getPlayer();
+            server.execute(() -> BreacherPlayerComponent.KEY.get(player).reset());
+        });
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
                 literal("fogradius")
                         .requires(source -> source.hasPermissionLevel(2))
@@ -1852,6 +1857,7 @@ public class Noellesroles implements ModInitializer {
             MurderMayhemWorldComponent.KEY.sync(world);
             if (world instanceof ServerWorld serverWorld) {
                 DeathArenaServerController.forceShutdown(serverWorld, true);
+                BreacherPlayerComponent.cleanupMarkers(serverWorld);
             }
             HiddenBodiesWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.get(world).reset();

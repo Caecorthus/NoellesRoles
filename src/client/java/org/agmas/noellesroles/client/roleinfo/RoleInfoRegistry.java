@@ -223,8 +223,8 @@ public class RoleInfoRegistry {
         Set<String> killer = Set.of(
                 "killer",
                 "morphling", "phantom", "swapper", "the_insane_damned_paranoid_killer", "bomber", "assassin",
-                "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander"
-                , "breacher"
+                "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander",
+                "breacher"
         );
         Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "gangster_star", "pathogen", "taotie", "criminal_reasoner", "ferryman");
         if (killer.contains(roleId)) return "killer";
