@@ -1431,12 +1431,6 @@ public class Noellesroles implements ModInitializer {
             if (victim instanceof ServerPlayerEntity serverVictim
                     && victim.getWorld() instanceof ServerWorld serverWorld
                     && DeathArenaStateHelper.isDeathArenaParticipant(serverVictim)) {
-                for (PlayerBodyEntity body : serverWorld.getEntitiesByType(
-                        TypeFilter.equals(PlayerBodyEntity.class),
-                        serverWorld.getWorldBorder().asVoxelShape().getBoundingBox(),
-                        candidate -> victim.getUuid().equals(candidate.getPlayerUuid()))) {
-                    DeathArenaServerController.rememberArenaBody(serverWorld, body.getUuid());
-                }
                 DeathArenaServerController.handleDeathAfter(serverVictim);
             }
             if (killer != null && victim.getWorld() instanceof ServerWorld serverWorld) {
@@ -1858,7 +1852,6 @@ public class Noellesroles implements ModInitializer {
             MurderMayhemWorldComponent.KEY.sync(world);
             if (world instanceof ServerWorld serverWorld) {
                 DeathArenaServerController.forceShutdown(serverWorld, true);
-                DeathArenaServerController.cleanupArenaArtifacts(serverWorld.getServer());
             }
             HiddenBodiesWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.get(world).reset();
