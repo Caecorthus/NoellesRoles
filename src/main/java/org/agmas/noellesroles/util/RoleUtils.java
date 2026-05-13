@@ -27,7 +27,8 @@ public final class RoleUtils {
             Noellesroles.POISONER,
             Noellesroles.BANDIT,
             Noellesroles.HUNTER,
-            Noellesroles.COMMANDER
+            Noellesroles.COMMANDER,
+            Noellesroles.BREACHER
     );
 
     public static boolean isActualKillerRole(Role role) {

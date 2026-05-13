@@ -12,6 +12,7 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.util.rolehud.AssassinHudRenderer;
+import org.agmas.noellesroles.client.util.rolehud.BreacherHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CommanderHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CorruptCopHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CriminalReasonerHudRenderer;
@@ -45,6 +46,7 @@ public final class HudRenderHelper {
 
     static {
         ROLE_HUD_REGISTRY.put(Noellesroles.ASSASSIN, new AssassinHudRenderer());
+        ROLE_HUD_REGISTRY.put(Noellesroles.BREACHER, new BreacherHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.COMMANDER, new CommanderHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.CORRUPT_COP, new CorruptCopHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.CRIMINAL_REASONER, new CriminalReasonerHudRenderer());

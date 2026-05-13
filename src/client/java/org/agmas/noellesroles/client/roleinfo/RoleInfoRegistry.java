@@ -224,6 +224,7 @@ public class RoleInfoRegistry {
                 "killer",
                 "morphling", "phantom", "swapper", "the_insane_damned_paranoid_killer", "bomber", "assassin",
                 "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander"
+                , "breacher"
         );
         Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "gangster_star", "pathogen", "taotie", "criminal_reasoner", "ferryman");
         if (killer.contains(roleId)) return "killer";
@@ -343,6 +344,11 @@ public class RoleInfoRegistry {
                 .addSkillWithSharedTrigger("shop", "inventory", "shared.trigger.inventory_open")
                 .addActiveUseSkill("threat_mark", "ability")
                 .addPassiveSkill("last_bullet"));
+
+        m.put("noellesroles:breacher", r("breacher")
+                .addSkillWithSharedNameEffectAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.effect.killer_instinct", "shared.trigger.hold_use")
+                .addSkillWithSharedNameEffectAndTrigger("shop", "inventory", "shared.name.killer_shop", "shared.effect.killer_shop", "shared.trigger.inventory_open")
+                .addActiveUseSkill("create_break_point", "ability"));
 
         // ===================== 乘客阵营 =====================
 

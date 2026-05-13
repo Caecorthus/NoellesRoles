@@ -100,6 +100,7 @@ import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
+import org.agmas.noellesroles.breacher.BreacherPlayerComponent;
 import org.agmas.noellesroles.commander.CommanderShopHandler;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
@@ -223,6 +224,7 @@ public class Noellesroles implements ModInitializer {
     public static Identifier FERRYMAN_ID = Identifier.of(MOD_ID, "ferryman");
     public static Identifier GANGSTER_STAR_ID = Identifier.of(MOD_ID, "gangster_star");
     public static Identifier COMMANDER_ID = Identifier.of(MOD_ID, "commander");
+    public static Identifier BREACHER_ID = Identifier.of(MOD_ID, "breacher");
     public static Identifier SAINT_ID = Identifier.of(MOD_ID, "saint");
     public static final Identifier MURDER_MAYHEM_ID = Identifier.of(MOD_ID, "murder_mayhem");
     public static final dev.doctor4t.wathe.api.GameMode MURDER_MAYHEM =
@@ -271,6 +273,7 @@ public class Noellesroles implements ModInitializer {
     public static Role BANDIT = WatheRoles.registerRole(new Role(BANDIT_ID, new Color(90, 100, 40).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
     public static Role HUNTER = WatheRoles.registerRole(new Role(HUNTER_ID, new Color(92, 76, 52).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
     public static Role COMMANDER = WatheRoles.registerRole(new Role(COMMANDER_ID, new Color(46, 0, 107).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true, RoleAppearanceCondition.minKillers(3)));
+    public static Role BREACHER = WatheRoles.registerRole(new Role(BREACHER_ID, new Color(120, 30, 30).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
 
 
     public static HashMap<Role, RoleAnnouncementTexts.RoleAnnouncementText> roleRoleAnnouncementTextHashMap = new HashMap<>();
@@ -1138,6 +1141,8 @@ public class Noellesroles implements ModInitializer {
             } else if (role.equals(SILENCER)) {
                 // 静语者开局冷却45秒
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 45);
+            } else if (role.equals(BREACHER)) {
+                BreacherPlayerComponent.KEY.get(player).setCooldownTicks(GameConstants.getInTicks(1, 0));
             } else if (role.equals(UNDERCOVER)) {
                 player.giveItemStack(WatheItems.WALKIE_TALKIE.getDefaultStack());
             } else if (role.equals(BODYGUARD)) {
@@ -1181,6 +1186,7 @@ public class Noellesroles implements ModInitializer {
             OrthopedistPlayerComponent.KEY.get(player).reset();
             FerrymanPlayerComponent.KEY.get(player).reset();
             CommanderPlayerComponent.KEY.get(player).reset();
+            BreacherPlayerComponent.KEY.get(player).reset();
             SaintPlayerComponent.KEY.get(player).reset();
             LooseEndPlayerComponent.KEY.get(player).reset();
             HallucinationPlayerComponent.KEY.get(player).reset();
@@ -2426,6 +2432,10 @@ public class Noellesroles implements ModInitializer {
                     GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, serverTarget, extra);
                 }
             }
+            if (gameWorldComponent.isRole(context.player(), BREACHER) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                BreacherPlayerComponent breacherComp = BreacherPlayerComponent.KEY.get(context.player());
+                breacherComp.tryCreatePoint();
+            }
             if (gameWorldComponent.isRole(context.player(), RECALLER) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
                 RecallerPlayerComponent recallerPlayerComponent = RecallerPlayerComponent.KEY.get(context.player());
                 PlayerShopComponent playerShopComponent = PlayerShopComponent.KEY.get(context.player());
@@ -3234,6 +3244,34 @@ public class Noellesroles implements ModInitializer {
         // 翻译键 replay.skill.noellesroles.silencer.target 在语言文件中定义
 
         // ===== 物品使用格式化器 =====
+
+        ReplayRegistry.registerSkillFormatter(BREACHER_ID, (event, match, world) -> {
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            if (actorUuid == null) return null;
+
+            Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            String action = data.getString("action");
+            String coordStr = String.format("(%d, %d, %d)", data.getInt("x"), data.getInt("y"), data.getInt("z"));
+
+            if ("maintain".equals(action)) {
+                UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
+                if (targetUuid == null) return null;
+
+                Text maintainerText = ReplayGenerator.formatPlayerName(targetUuid, playerInfoCache);
+                int maintainerCount = Math.max(1, data.getInt("maintainerCount"));
+                if (maintainerCount > 1) {
+                    return Text.translatable("replay.skill.noellesroles.breacher.maintain.multiple", maintainerText, maintainerCount - 1, actorText, coordStr);
+                }
+                return Text.translatable("replay.skill.noellesroles.breacher.maintain", maintainerText, actorText, coordStr);
+            }
+            if ("reward".equals(action)) {
+                int reward = data.contains("reward") ? data.getInt("reward") : 100;
+                return Text.translatable("replay.skill.noellesroles.breacher.reward", actorText, coordStr, reward);
+            }
+            return Text.translatable("replay.skill.noellesroles.breacher.place", actorText, coordStr);
+        });
 
         Identifier fineDrinkId = Registries.ITEM.getId(ModItems.FINE_DRINK);
         Identifier hallucinationMedicineId = Registries.ITEM.getId(ModItems.HALLUCINATION_MEDICINE);

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "assassin.AssassinHudMixin",
+    "breacher.BreacherHudMixin",
     "commander.CommanderHudMixin",
     "commander.CommanderRoleNameRendererMixin",
     "coroner.CoronerHudMixin",
