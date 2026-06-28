@@ -886,13 +886,24 @@ public class Noellesroles implements ModInitializer {
             }
         });
         CheckWinCondition.EVENT.register((world, gameComponent, currentStatus) -> {
+            ServerPlayerEntity vultureWinner = null;
+            boolean survivalMasterCompleted = false;
+            ServerPlayerEntity pathogenWinner = null;
+            ServerPlayerEntity jesterWinner = null;
+            ServerPlayerEntity taotieWinner = null;
+            boolean taotieBlocksOrdinaryWin = false;
+            boolean jesterPsychoBlocksOrdinaryWin = false;
+            ServerPlayerEntity corruptCopWinner = null;
+            boolean corruptCopBlocksOrdinaryWin = false;
+
             // 秃鹫胜利检查（优先级最高）
             for (UUID uuid : gameComponent.getAllWithRole(VULTURE)) {
                 PlayerEntity vulture = world.getPlayerByUuid(uuid);
                 if (GameFunctions.isPlayerPlayingAndAlive(vulture)) {
                     VulturePlayerComponent component = VulturePlayerComponent.KEY.get(vulture);
                     if (component.hasWon()) {
-                        return CheckWinCondition.WinResult.neutralWin((ServerPlayerEntity) vulture);
+                        vultureWinner = (ServerPlayerEntity) vulture;
+                        break;
                     }
                 }
             }
@@ -903,7 +914,8 @@ public class Noellesroles implements ModInitializer {
                 if (GameFunctions.isPlayerPlayingAndAlive(survivalMaster)) {
                     SurvivalMasterPlayerComponent survivalComp = SurvivalMasterPlayerComponent.KEY.get(survivalMaster);
                     if (survivalComp.hasSurvivalMomentCompleted()) {
-                        return CheckWinCondition.WinResult.allow(GameFunctions.WinStatus.PASSENGERS);
+                        survivalMasterCompleted = true;
+                        break;
                     }
                 }
             }
@@ -924,7 +936,8 @@ public class Noellesroles implements ModInitializer {
                         }
                     }
                     if (allInfected && GameFunctions.isPlayerPlayingAndAlive(pathogen)) {
-                        return CheckWinCondition.WinResult.neutralWin((ServerPlayerEntity) pathogen);
+                        pathogenWinner = (ServerPlayerEntity) pathogen;
+                        break;
                     }
                 }
             }
@@ -946,8 +959,11 @@ public class Noellesroles implements ModInitializer {
                         }
                         if (!othersAlive) {
                             component.won = true;
-                            return CheckWinCondition.WinResult.neutralWin((ServerPlayerEntity) jester);
                         }
+                    }
+                    if (component.won) {
+                        jesterWinner = (ServerPlayerEntity) jester;
+                        break;
                     }
                 }
             }
@@ -960,19 +976,18 @@ public class Noellesroles implements ModInitializer {
 
                     // Win condition 1: Swallowed all players
                     if (taotieComp.hasSwallowedEveryone()) {
-                        return CheckWinCondition.WinResult.neutralWin((ServerPlayerEntity) taotie);
+                        taotieWinner = (ServerPlayerEntity) taotie;
+                        break;
                     }
 
                     // Win condition 2: Taotie Moment completed
                     if (taotieComp.hasTaotieMomentCompleted()) {
-                        return CheckWinCondition.WinResult.neutralWin((ServerPlayerEntity) taotie);
+                        taotieWinner = (ServerPlayerEntity) taotie;
+                        break;
                     }
 
                     // Block other factions from winning while Taotie is alive
-                    if (currentStatus == GameFunctions.WinStatus.KILLERS
-                            || currentStatus == GameFunctions.WinStatus.PASSENGERS) {
-                        return CheckWinCondition.WinResult.block();
-                    }
+                    taotieBlocksOrdinaryWin = true;
                 }
             }
 
@@ -981,10 +996,9 @@ public class Noellesroles implements ModInitializer {
                 PlayerEntity jester = world.getPlayerByUuid(uuid);
                 if (jester == null) continue;
                 JesterPlayerComponent component = JesterPlayerComponent.KEY.get(jester);
-                if ((component.inPsychoMode || component.isTransitioning())
-                        && (currentStatus == GameFunctions.WinStatus.KILLERS
-                            || currentStatus == GameFunctions.WinStatus.PASSENGERS)) {
-                    return CheckWinCondition.WinResult.block();
+                if (component.inPsychoMode || component.isTransitioning()) {
+                    jesterPsychoBlocksOrdinaryWin = true;
+                    break;
                 }
             }
 
@@ -1012,16 +1026,33 @@ public class Noellesroles implements ModInitializer {
                 }
 
                 if (aliveCount == 1 && corruptCopIsAlive) {
-                    return CheckWinCondition.WinResult.neutralWin(livingCorruptCop);
-                }
-
-                if (currentStatus == GameFunctions.WinStatus.KILLERS
-                        || currentStatus == GameFunctions.WinStatus.PASSENGERS) {
-                    return CheckWinCondition.WinResult.block();
+                    corruptCopWinner = livingCorruptCop;
+                } else {
+                    corruptCopBlocksOrdinaryWin = true;
                 }
             }
 
-            return null;
+            return switch (NoellesWinRules.chooseWinAction(
+                    currentStatus,
+                    vultureWinner != null,
+                    survivalMasterCompleted,
+                    pathogenWinner != null,
+                    jesterWinner != null,
+                    taotieWinner != null,
+                    taotieBlocksOrdinaryWin,
+                    jesterPsychoBlocksOrdinaryWin,
+                    corruptCopWinner != null,
+                    corruptCopBlocksOrdinaryWin
+            )) {
+                case VULTURE_WIN -> CheckWinCondition.WinResult.neutralWin(vultureWinner);
+                case PATHOGEN_WIN -> CheckWinCondition.WinResult.neutralWin(pathogenWinner);
+                case JESTER_WIN -> CheckWinCondition.WinResult.neutralWin(jesterWinner);
+                case TAOTIE_WIN -> CheckWinCondition.WinResult.neutralWin(taotieWinner);
+                case CORRUPT_COP_WIN -> CheckWinCondition.WinResult.neutralWin(corruptCopWinner);
+                case BLOCK -> CheckWinCondition.WinResult.block();
+                case ALLOW_PASSENGERS -> CheckWinCondition.WinResult.allow(GameFunctions.WinStatus.PASSENGERS);
+                case NONE -> null;
+            };
         });
 
         // 侦探：记录击杀历史
