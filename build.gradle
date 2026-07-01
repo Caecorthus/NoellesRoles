@@ -75,6 +75,9 @@ dependencies {
     modRuntimeOnly "maven.modrinth:simple-voice-chat:fabric-${voicechat_version}"
     modRuntimeOnly "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}:fabric-stub"
 
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.3"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
 }
 
 processResources {
@@ -103,6 +106,10 @@ tasks.withType(JavaCompile).configureEach {
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         it.options.release.set(targetJavaVersion)
     }
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
 }
 
 java {

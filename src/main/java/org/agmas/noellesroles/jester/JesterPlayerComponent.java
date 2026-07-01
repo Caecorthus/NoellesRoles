@@ -9,11 +9,13 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheAttributes;
 import dev.doctor4t.wathe.index.WatheEntities;
+import dev.doctor4t.wathe.index.WatheItems;
 import dev.doctor4t.wathe.record.GameRecordManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
@@ -197,7 +199,7 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
 
     private void startJesterPsychoMode() {
         PlayerPsychoComponent psychoComponent = PlayerPsychoComponent.KEY.get(this.player);
-        if (psychoComponent.startPsycho(PsychoType.VISIBLE_QUIET)) {
+        if (ensureForcedPsychoBatSlot() && psychoComponent.startPsycho(PsychoType.VISIBLE_QUIET)) {
             this.psychoModeTicks = GameConstants.getInTicks(0, 60);
             this.killCount = 0;
             // 初始护盾 = 当局总人数/6（上限 3）
@@ -248,6 +250,28 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
 
             this.sync();
         }
+    }
+
+    private boolean ensureForcedPsychoBatSlot() {
+        boolean[] occupiedSlots = new boolean[JesterHotbarRules.HOTBAR_SIZE];
+        for (int slot = 0; slot < JesterHotbarRules.HOTBAR_SIZE; slot++) {
+            occupiedSlots[slot] = !this.player.getInventory().getStack(slot).isEmpty();
+        }
+        int slot = JesterHotbarRules.forcedPsychoBatSlot(occupiedSlots, this.player.getInventory().selectedSlot);
+        ItemStack displaced = this.player.getInventory().getStack(slot);
+        if (displaced.isEmpty()) {
+            return true;
+        }
+        if (!(this.player instanceof ServerPlayerEntity serverPlayer)) {
+            return false;
+        }
+
+        // Jester Moment is a forced transformation, so a full hotbar cannot block the bat grant.
+        // 小丑时刻是强制变身流程，热键栏全满不能阻止球棒发放。
+        this.player.getInventory().setStack(slot, ItemStack.EMPTY);
+        this.player.getInventory().selectedSlot = slot;
+        serverPlayer.dropItem(displaced.copy(), true, false);
+        return true;
     }
 
     public void registerKill() {
