@@ -65,6 +65,8 @@ import org.agmas.noellesroles.client.sound.TalkBubblesConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoLegacyScreen;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
+import org.agmas.noellesroles.client.puppeteer.PuppeteerClient;
+import org.agmas.noellesroles.client.screen.MengPoChoiceScreen;
 import org.agmas.noellesroles.client.screen.NoellesRolesConfigScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
@@ -136,6 +138,7 @@ import org.agmas.noellesroles.reporter.ReporterPlayerComponent;
 import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
+import org.agmas.noellesroles.entity.PuppetEntity;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
 import org.agmas.noellesroles.ferryman.FerrymanPreserveWorldComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
@@ -406,6 +409,8 @@ public class NoellesrolesClient implements ClientModInitializer {
         EntityRendererRegistry.register(NoellesRolesEntities.HUNTER_TRAP_ENTITY, HunterTrapEntityRenderer::new);
         EntityRendererRegistry.register(NoellesRolesEntities.BREACHER_MARKER_ENTITY, BreacherMarkerEntityRenderer::new);
         EntityRendererRegistry.register(NoellesRolesEntities.RECALLER_ANCHOR_ENTITY, RecallerAnchorEntityRenderer::new);
+        // 傀儡师：傀儡 / 本体替身渲染、本能透视、本体疾跑锁
+        PuppeteerClient.init();
 
         CanSeeMoney.EVENT.register(player -> {
             if (!GameFunctions.isPlayerPlayingAndAlive(player)) return null;
@@ -420,6 +425,12 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> LooseEndsRadarHudRenderer.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> EconomistClientState.tick());
+        // 孟婆开局选择：处于选择中且没有其它界面时自动弹出（也覆盖重连后界面丢失的情况）
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.currentScreen == null && MengPoChoiceScreen.isChoosing(client.player)) {
+                client.setScreen(new MengPoChoiceScreen());
+            }
+        });
 
         // 注册 CanSeeBodyRole 监听器：高理智的验尸官查看尸体时可获得完整验尸信息
         CanSeeBodyRole.EVENT.register(viewer -> {
@@ -467,7 +478,7 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册 GetInstinctHighlight 监听器：乘务员登记后的玩家/尸体短暂绿色高亮（仅乘务员可见）
         GetInstinctHighlight.EVENT.register(entity -> {
-            if (!(entity instanceof PlayerEntity) && !(entity instanceof PlayerBodyEntity)) return null;
+            if (!(entity instanceof PlayerEntity) && !(entity instanceof PlayerBodyEntity) && !(entity instanceof PuppetEntity)) return null;
             ClientPlayerEntity localPlayer = MinecraftClient.getInstance().player;
             if (localPlayer == null) return null;
             if (!WatheClient.isPlayerPlayingAndAlive()) return null;
@@ -1123,6 +1134,10 @@ public class NoellesrolesClient implements ClientModInitializer {
                         int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
                         return !ferrymanComponent.hasFerriedBody(body.getUuid()) && body.age < decomposedAge;
                     }
+                    // 傀儡师：只对准还能做成傀儡的尸体（未化白骨、不是傀儡倒下留下的）
+                    if (gameWorldComponent.isRole(bodyPlayer, Noellesroles.PUPPETEER)) {
+                        return PuppeteerClient.isConvertibleBody(body);
+                    }
                     return true;
                 });
                 if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.PATHOGEN)) {
@@ -1344,6 +1359,12 @@ public class NoellesrolesClient implements ClientModInitializer {
                         return;
                     }
 
+                    // 傀儡师按G：操纵中切回本体；对准可转化尸体施放傀儡术；否则操纵傀儡
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.PUPPETEER)) {
+                        PuppeteerClient.onAbilityKey(client, localPlayer, targetBody);
+                        return;
+                    }
+
                     // 拾荒者角色按G：对准3格内的尸体开始搜刮
                     if (gameWorldComponent.isRole(localPlayer, Noellesroles.JUNKER)) {
                         if (!GameFunctions.isPlayerPlayingAndAlive(localPlayer)
@@ -1401,6 +1422,12 @@ public class NoellesrolesClient implements ClientModInitializer {
                                 && MorphlingPlayerComponent.KEY.get(localPlayer).getMorphTicks() == 0) {
                             client.setScreen(new RoleTargetMenuScreen(localPlayer, RoleTargetMenuScreen.MenuType.MORPHLING));
                         }
+                        return;
+                    }
+
+                    // 傀儡师按Y：操纵中回收傀儡
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.PUPPETEER)) {
+                        PuppeteerClient.onAbility2Key(localPlayer);
                         return;
                     }
 

@@ -221,7 +221,7 @@ public class RoleInfoRegistry {
                 "killer",
                 "morphling", "phantom", "swapper", "the_insane_damned_paranoid_killer", "bomber", "assassin",
                 "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander",
-                "breacher", "phonism", "dream_eater"
+                "breacher", "phonism", "dream_eater", "puppeteer"
         );
         Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "gangster_star", "pathogen", "taotie", "criminal_reasoner", "ferryman");
         if (killer.contains(roleId)) return "killer";
@@ -370,6 +370,16 @@ public class RoleInfoRegistry {
                 .addItemEffectSkill("sleeping_pill")
                 .addPassiveSkill("sleep_vision"));
 
+        // 傀儡师
+        m.put("noellesroles:puppeteer", r("puppeteer")
+                .addSkillWithSharedNameEffectAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.effect.killer_instinct", "shared.trigger.hold_use")
+                .addSkillWithSharedNameEffectAndTrigger("shop", "inventory", "shared.name.killer_shop", "shared.effect.killer_shop", "shared.trigger.inventory_open")
+                .addSkill("puppetry", "ability") // 傀儡术
+                .addSkill("control", "ability") // 操纵
+                .addSkill("recall", "ability2") // 回收
+                .addPassiveSkill("fragility") // 提线易断
+                .addPassiveSkill("body")); // 本体限制
+
         // ===================== 乘客阵营 =====================
 
         // 列车长
@@ -507,6 +517,14 @@ public class RoleInfoRegistry {
                 .addSharedNamedPassiveSkillWithSharedEffect("passenger", "shared.name.passenger", "shared.effect.passenger")
                 .addShopSkill("shop")
                 .addItemEffectSkill("economic_report"));
+
+        // 孟婆
+        m.put("noellesroles:mengpo", r("mengpo")
+                .addSharedNamedPassiveSkill("passenger", "shared.name.passenger") // 孟婆不能捡枪，不用通用乘客说明
+                .addRoundStartSkill("choice")
+                .addPassiveSkill("sell_soup")
+                .addItemEffectSkill("soup")
+                .addPassiveSkill("no_gun"));
 
         // 白骑士
         m.put("noellesroles:white_knight", r("white_knight")

@@ -56,6 +56,7 @@ import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -720,6 +721,29 @@ public class BreacherWorldComponent implements ServerTickingComponent {
         lightCache = null;
         nextPointId = 1;
         removeRepairTask(serverWorld);
+    }
+
+    /** 转职/失去破袭者身份时：移除该玩家的所有破坏点，恢复对应电灯与标记。 */
+    public void clearOwnedBy(ServerWorld serverWorld, UUID ownerUuid) {
+        boolean removed = false;
+        for (Iterator<PointState> iterator = points.iterator(); iterator.hasNext(); ) {
+            PointState point = iterator.next();
+            if (!point.owner.equals(ownerUuid)) {
+                continue;
+            }
+            restoreLightsFor(serverWorld, point);
+            removeMarker(serverWorld, point);
+            iterator.remove();
+            removed = true;
+        }
+        if (!removed) {
+            return;
+        }
+        if (points.isEmpty()) {
+            // 和 completePoint 一致：没有破坏点就移除所有玩家的「去修复破坏点」任务
+            removeRepairTask(serverWorld);
+        }
+        // breachBlackout 会在下一 tick 的 tickVisionPenalties 里按 points.size() 自动解除
     }
 
     public static void cleanupMarkers(ServerWorld serverWorld) {

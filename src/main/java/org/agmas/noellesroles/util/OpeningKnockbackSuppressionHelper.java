@@ -71,6 +71,11 @@ public final class OpeningKnockbackSuppressionHelper {
         }
     }
 
+    /** 玩家是否仍处于开局窗口（开局刀冷却尚未结束、击退压制仍生效）。 */
+    public static boolean isInOpeningWindow(PlayerEntity player) {
+        return openingWindowPlayers.contains(player.getUuid());
+    }
+
     /** 攻击者的近战击退是否应被压制；持刀且刀不在冷却时立即恢复击退。 */
     public static boolean isSuppressed(PlayerEntity player) {
         boolean inWindow = player.getWorld().isClient

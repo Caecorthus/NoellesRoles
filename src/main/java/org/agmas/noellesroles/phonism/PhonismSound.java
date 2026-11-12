@@ -3,7 +3,7 @@ package org.agmas.noellesroles.phonism;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.index.WatheSounds;
 import dev.doctor4t.wathe.util.Scheduler;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.network.packet.s2c.play.StopSoundS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -145,7 +145,7 @@ public enum PhonismSound {
      * 到点时取目标当时坐标（目标中途死亡/移除则在最后已知坐标播放）。
      * 炸弹序列纯声音伪造：不生成粒子、不造成伤害。
      */
-    public void playSequence(ServerWorld world, PlayerEntity target) {
+    public void playSequence(ServerWorld world, Entity target) {
         double x = target.getX();
         double y = target.getY();
         double z = target.getZ();
@@ -162,7 +162,7 @@ public enum PhonismSound {
     }
 
     /** 逐 tick 跟随目标记录坐标，倒数到 0 时在最后已知坐标播放后继音。 */
-    private void stepFollow(ServerWorld world, PlayerEntity target, double x, double y, double z, int ticksRemaining) {
+    private void stepFollow(ServerWorld world, Entity target, double x, double y, double z, int ticksRemaining) {
         if (isTrackable(world, target)) {
             x = target.getX();
             y = target.getY();
@@ -182,7 +182,7 @@ public enum PhonismSound {
      * 定时炸弹序列：每 6 tick 一次滴滴声、共 15 秒、跟随目标；
      * 目标中途死亡/移除则剩余滴滴与爆炸留在最后已知坐标完成（“炸弹留在尸体上”）。
      */
-    private void stepBomb(ServerWorld world, PlayerEntity target, double x, double y, double z, int ticksRemaining) {
+    private void stepBomb(ServerWorld world, Entity target, double x, double y, double z, int ticksRemaining) {
         if (isTrackable(world, target)) {
             x = target.getX();
             y = target.getY();
@@ -201,7 +201,7 @@ public enum PhonismSound {
         Scheduler.schedule(() -> stepBomb(world, target, fx, fy, fz, ticksRemaining - 1), 1);
     }
 
-    private static boolean isTrackable(ServerWorld world, PlayerEntity target) {
+    private static boolean isTrackable(ServerWorld world, Entity target) {
         return !target.isRemoved() && target.getWorld() == world;
     }
 

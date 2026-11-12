@@ -7,6 +7,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.ModItems;
+import org.agmas.noellesroles.puppeteer.PuppetGunHitTracker;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,13 +28,19 @@ public abstract class GunMissRecordMixin {
         if (player == null || itemId == null || target != null) {
             return;
         }
+        // 刚刚打中的是傀儡：Wathe 仍按未命中继续，这里跳过虚假的 gun_miss
+        if (PuppetGunHitTracker.consume(player, itemId)) {
+            return;
+        }
 
         boolean missedShot;
         if (itemId.equals(Registries.ITEM.getId(WatheItems.REVOLVER))
                 || itemId.equals(Registries.ITEM.getId(WatheItems.DERRINGER))) {
             missedShot = true;
         } else if (itemId.equals(Registries.ITEM.getId(ModItems.DOUBLE_BARREL_SHOTGUN))) {
-            missedShot = extra != null && "fire".equals(extra.getString("action"));
+            missedShot = extra != null
+                    && "fire".equals(extra.getString("action"))
+                    && !extra.getBoolean("hit");
         } else {
             return;
         }

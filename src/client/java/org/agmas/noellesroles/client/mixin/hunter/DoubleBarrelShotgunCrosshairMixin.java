@@ -34,7 +34,7 @@ public class DoubleBarrelShotgunCrosshairMixin {
         if (!stack.isOf(ModItems.DOUBLE_BARREL_SHOTGUN)
                 || player.getItemCooldownManager().isCoolingDown(stack.getItem())
                 || DoubleBarrelShotgunItem.getLoadedShells(stack) <= 0
-                || DoubleBarrelShotgunItem.findTarget(player) == null) {
+                || !DoubleBarrelShotgunItem.hasAnyTarget(player)) {
             return original;
         }
 

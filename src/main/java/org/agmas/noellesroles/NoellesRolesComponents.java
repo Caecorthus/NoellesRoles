@@ -8,6 +8,8 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.attendant.AttendantPlayerComponent;
 import org.agmas.noellesroles.bandit.BanditPlayerComponent;
 import org.agmas.noellesroles.baosang.BaosangPlayerComponent;
+import org.agmas.noellesroles.mengpo.MengPoPlayerComponent;
+import org.agmas.noellesroles.mengpo.MengPoSoupPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
@@ -44,6 +46,8 @@ import org.agmas.noellesroles.dreameater.SleepingPillPlateComponent;
 import org.agmas.noellesroles.economist.EconomistPlayerComponent;
 import org.agmas.noellesroles.junker.JunkerLootWorldComponent;
 import org.agmas.noellesroles.junker.JunkerPlayerComponent;
+import org.agmas.noellesroles.puppeteer.PuppetWorldComponent;
+import org.agmas.noellesroles.puppeteer.PuppeteerPlayerComponent;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.agmas.noellesroles.survivalmaster.SurvivalMasterPlayerComponent;
 import org.agmas.noellesroles.toxicologist.AntidotePlateShieldComponent;
@@ -118,6 +122,9 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, DreamEaterPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(DreamEaterPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, BanditPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(BanditPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, PhonismPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(PhonismPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, PuppeteerPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(PuppeteerPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, MengPoPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(MengPoPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, MengPoSoupPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(MengPoSoupPlayerComponent::new);
     }
 
     @Override
@@ -136,5 +143,6 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         worldComponentFactoryRegistry.register(BreacherWorldComponent.KEY, BreacherWorldComponent::new);
         worldComponentFactoryRegistry.register(RecallerAnchorWorldComponent.KEY, RecallerAnchorWorldComponent::new);
         worldComponentFactoryRegistry.register(FerrymanPreserveWorldComponent.KEY, FerrymanPreserveWorldComponent::new);
+        worldComponentFactoryRegistry.register(PuppetWorldComponent.KEY, PuppetWorldComponent::new);
     }
 }

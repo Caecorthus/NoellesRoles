@@ -8,6 +8,7 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.agmas.noellesroles.Noellesroles;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.Component;
@@ -72,9 +73,14 @@ public class SilenceZonePlayerComponent implements Component, AutoSyncedComponen
     /** 判断玩家是否处于任何激活的无声区域内（区域锚点本人也在区域内）。 */
     public static boolean isPlayerInSilenceZone(PlayerEntity player) {
         if (player == null || !GameFunctions.isPlayerPlayingAndAlive(player)) return false;
-        for (PlayerEntity anchor : player.getWorld().getPlayers()) {
+        return isPositionInSilenceZone(player.getWorld(), player.getX(), player.getY(), player.getZ());
+    }
+
+    /** 判断某个世界坐标是否处于任何激活的无声区域内（用于以语音发源位置判定）。 */
+    public static boolean isPositionInSilenceZone(World world, double x, double y, double z) {
+        for (PlayerEntity anchor : world.getPlayers()) {
             SilenceZonePlayerComponent comp = KEY.get(anchor);
-            if (comp.isZoneActive() && player.squaredDistanceTo(anchor) <= ZONE_RADIUS_SQUARED) {
+            if (comp.isZoneActive() && anchor.squaredDistanceTo(x, y, z) <= ZONE_RADIUS_SQUARED) {
                 return true;
             }
         }

@@ -39,6 +39,13 @@ public class BodyForgeryWorldComponent implements AutoSyncedComponent {
         return this.forgedSkins.get(bodyUuid);
     }
 
+    /** 尸体被消耗/转化时移除赝造映射，避免旧实体 UUID 残留。 */
+    public void removeForgedSkin(UUID bodyUuid) {
+        if (this.forgedSkins.remove(bodyUuid) != null) {
+            KEY.sync(this.world);
+        }
+    }
+
     public void reset() {
         if (!this.forgedSkins.isEmpty()) {
             this.forgedSkins.clear();

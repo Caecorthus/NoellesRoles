@@ -89,7 +89,11 @@
         "noellesroles:morphling_scramble",
         "noellesroles:body_forgery",
         "noellesroles:ferryman_preserve",
-        "noellesroles:phonism"
+        "noellesroles:phonism",
+        "noellesroles:puppeteer",
+        "noellesroles:puppets",
+        "noellesroles:mengpo",
+        "noellesroles:mengpo_soup"
       ]
   },
   "mixins": [
